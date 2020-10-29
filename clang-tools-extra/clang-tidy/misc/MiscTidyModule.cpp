@@ -23,6 +23,7 @@
 #include "UnusedAliasDeclsCheck.h"
 #include "UnusedParametersCheck.h"
 #include "UnusedUsingDeclsCheck.h"
+#include "StronglyTypeHRESULTCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -56,6 +57,7 @@ public:
         "misc-unused-parameters");
     CheckFactories.registerCheck<UnusedUsingDeclsCheck>(
         "misc-unused-using-decls");
+    CheckFactories.registerCheck<StronglyTypeHRESULTCheck>("misc-strongly-type-hresult");
   }
 };
 
