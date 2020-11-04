@@ -7,6 +7,49 @@
 //
 //===----------------------------------------------------------------------===//
 
+//
+// HOWTO
+//
+// 1. Build clang and clang-tidy
+// 2. Build orc using custom clang:
+//   $ENV:CC="C:\llvm-project\build\MinSizeRel\bin\clang-cl.exe"
+//   $ENV:CXX="C:\llvm-project\build\MinSizeRel\bin\clang-cl.exe"
+//   cmake -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+//       -DCMAKE_BUILD_TYPE=MinSizeRel .. ninja
+//
+// 3. Execute:
+//   On a single file:
+//
+//   . "c:\llvm-project\build\MinSizeRel\bin\clang-tidy.exe" --fix
+//       -checks=misc-strongly-type-hresult -p c:\dfir-orc\build-llvm
+//       c:\dfir-orc\src\OrcLib\FooBar.cpp
+//
+//   Recursively:
+//
+//   Get-ChildItem -Recurse -File -Include ("*.h", "*.cpp") c:\dfir-orc\src |
+//       ForEach-Object -ThrottleLimit 8 -Parallel { .
+//       "c:\llvm-project\build\MinSizeRel\bin\clang-tidy.exe" --fix
+//       -checks=misc-strongly-type-hresult -p c:\dfir-orc\build-llvm "$_" 2>&1
+//       | Tee-Object -FilePath "c:\dfir-orc\build-llvm\log\$($_.name).log" }
+//
+// 4. Optional: build and execute clang-query to test match expression:
+//   . "c:\llvm-project\build\MinSizeRel\bin\clang-query.exe" -p .
+//       c:\dfir-orc\OrcLib\FooBar.cpp
+//
+//   > set output detailed-ast
+//   > m namedDecl(hasName("Run"))
+//   > m cxxMethodDecl(hasName("Run"), ofClass(hasName("Main")),
+//       returns(asString("HRESULT")))
+//   > m callExpr(hasDeclaration(functionDecl(hasName("Log::Error"))))
+//
+// See also:
+// - https://www.youtube.com/watch?v=VqCkCDFLSsc&feature=emb_title
+// - https://devblogs.microsoft.com/cppblog/exploring-clang-tooling-part-0-building-your-code-with-clang/
+// - https://devblogs.microsoft.com/cppblog/exploring-clang-tooling-part-1-extending-clang-tidy/
+// - https://devblogs.microsoft.com/cppblog/exploring-clang-tooling-part-2-examining-the-clang-ast-with-clang-query/
+// - https://devblogs.microsoft.com/cppblog/exploring-clang-tooling-part-3-rewriting-code-with-clang-tidy/
+//
+
 //#define VERBOSE
 
 #include <iostream>
@@ -213,7 +256,7 @@ std::string GetUnderlyingTypeAsString(const clang::DeclRefExpr *declRefExpr) {
   return {};
 }
 
-std::string Escape(const std::string& s) {
+std::string Escape(const std::string &s) {
   std::string escaped;
   for (auto c : s) {
     if (c == '%') {
